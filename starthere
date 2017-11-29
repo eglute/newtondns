@@ -1,0 +1,203 @@
+ansible-role-requirements.yml — version of designate. update.
+
+root@egle-newton-dns-5:/opt/openstack-ansible# git cherry-pick 835bec6c3656151deaa8632c2772f638095eb7ae
+error: could not apply 835bec6... Adding Designate to integrated repo.
+hint: after resolving the conflicts, mark the corrected paths
+hint: with 'git add <paths>' or 'git rm <paths>'
+hint: and commit the result with 'git commit'
+
+root@egle-newton-dns-5:/opt/openstack-ansible# git status
+On branch stable/newton
+Your branch is up-to-date with 'origin/stable/newton'.
+You are currently cherry-picking commit 835bec6.
+  (fix conflicts and run "git cherry-pick --continue")
+  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
+
+Changes to be committed:
+
+	new file:   etc/openstack_deploy/conf.d/designate.yml.aio
+	new file:   etc/openstack_deploy/conf.d/designate.yml.example
+	modified:   playbooks/defaults/repo_packages/openstack_services.yml
+	new file:   playbooks/inventory/env.d/designate.yml
+	modified:   playbooks/inventory/group_vars/all.yml
+	new file:   playbooks/inventory/group_vars/designate_all.yml
+	new file:   playbooks/os-designate-install.yml
+	new file:   releasenotes/notes/add-designate-to-repo-7be6ea74870196ff.yaml
+	modified:   tests/test_inventory.py
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+
+
+
+
+
+	both modified:   ansible-role-requirements.yml
+	both modified:   doc/source/developer-docs/advanced-role-docs.rst
+	both modified:   etc/openstack_deploy/user_secrets.yml
+	both modified:   playbooks/vars/configs/haproxy_config.yml
+
+#Resolve conflicts:
+root@egle-newton-dns-5:/opt/openstack-ansible# vi ansible-role-requirements.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# vi ansible-role-requirements.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# git add ansible-role-requirements.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# vi  doc/source/developer-docs/advanced-role-docs.rst
+root@egle-newton-dns-5:/opt/openstack-ansible# git add  doc/source/developer-docs/advanced-role-docs.rst
+root@egle-newton-dns-5:/opt/openstack-ansible# vi etc/openstack_deploy/user_secrets.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# git add etc/openstack_deploy/user_secrets.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# vi playbooks/vars/configs/haproxy_config.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# git add playbooks/vars/configs/haproxy_config.yml
+root@egle-newton-dns-5:/opt/openstack-ansible# 
+
+
+
+
+
+playbooks/inventory/env.d/designate.yml
+root@egle-newton-dns-6:/opt/openstack-ansible# git diff playbooks/inventory/env.d/designate.yml
+diff --git a/playbooks/inventory/env.d/designate.yml b/playbooks/inventory/env.d/designate.yml
+index 4eaf94b..8893e58 100644
+--- a/playbooks/inventory/env.d/designate.yml
++++ b/playbooks/inventory/env.d/designate.yml
+@@ -23,10 +23,10 @@ component_skel:
+   designate_mdns:
+     belongs_to:
+       - designate_all
+-  designate_pool_manager:
++  designate_worker:
+     belongs_to:
+       - designate_all
+-  designate_zone_manager:
++  designate_producer:
+     belongs_to:
+       - designate_all
+   designate_sink:
+@@ -41,8 +41,8 @@ container_skel:
+       - designate_api
+       - designate_central
+       - designate_mdns
+-      - designate_pool_manager
+-      - designate_zone_manager
++      - designate_worker
++      - designate_producer
+       - designate_sink
+     properties:
+       service_name: designate
+
+
+
+git diff playbooks/inventory/group_vars/designate_all.yml
+diff --git a/playbooks/inventory/group_vars/designate_all.yml b/playbooks/inventory/group_vars/designate_all.yml
+index 80b331e..8db7a4a 100644
+--- a/playbooks/inventory/group_vars/designate_all.yml
++++ b/playbooks/inventory/group_vars/designate_all.yml
+@@ -24,9 +24,6 @@ designate_service_region: "{{ service_region }}"
+ designate_galera_address: "{{ galera_address }}"
+ designate_galera_user: designate
+ designate_galera_database_name: designate
+-designate_pool_manager_galera_user: designate_pool_manager
+-designate_pool_manager_galera_address: "{{ galera_address }}"
+-designate_pool_manager_galera_database_name: designate_pool_manager
+ 
+ # RPC
+
+
+git diff playbooks/os-designate-install.yml
+diff --git a/playbooks/os-designate-install.yml b/playbooks/os-designate-install.yml
+index bbe0131..d8dd411 100644
+--- a/playbooks/os-designate-install.yml
++++ b/playbooks/os-designate-install.yml
+@@ -58,19 +58,11 @@
+         login_host: "{{ designate_galera_address }}"
+         db_name: "{{ designate_galera_database_name }}"
+       when: inventory_hostname == groups['designate_all'][0]
+-    - include: common-tasks/mysql-db-user.yml
+-      static: no
+-      vars:
+-        user_name: "{{ designate_pool_manager_galera_user }}"
+-        password: "{{ designate_pool_manager_galera_password }}"
+-        login_host: "{{ designate_pool_manager_galera_address }}"
+-        db_name: "{{ designate_pool_manager_galera_database_name }}"
+-      when: inventory_hostname == groups['designate_all'][0]
+     - include: common-tasks/package-cache-proxy.yml
+   roles:
+     - role: "os_designate"
+       designate_venv_tag: "{{ openstack_release }}"
+-      designate_venv_download_url: "{{ openstack_repo_url }}/venvs/{{ openstack_release }}/{{ ansible_distribution | lower }}/designate-{{ openstack_release }}-{{ ansible_architecture | lower }}.tgz"
++      designate_venv_download_url: "{{ venv_base_download_url }}/designate-{{ openstack_release }}-{{ ansible_architecture | lower }}.tgz"
+     - role: "openstack_openrc"
+       tags:
+         - openrc
+root@egle-newton-dns-6:/opt/openstack-ansible# 
+
+
+
+git diff playbooks/vars/configs/haproxy_config.yml
+diff --git a/playbooks/vars/configs/haproxy_config.yml b/playbooks/vars/configs/haproxy_config.yml
+index 0376337..e946233 100644
+--- a/playbooks/vars/configs/haproxy_config.yml
++++ b/playbooks/vars/configs/haproxy_config.yml
+@@ -252,6 +252,7 @@ haproxy_default_services:
+   - service:
+       haproxy_service_name: designate_api
+       haproxy_backend_nodes: "{{ groups['designate_api'] | default([]) }}"
++      haproxy_ssl: "{{ haproxy_ssl }}"
+       haproxy_port: 9001
+       haproxy_balance_type: http
+       haproxy_backend_options:
+
+
+
+cd /opt/openstack-ansible
+openstack-ansible playbooks/lxc-containers-create.yml --limit designate_all
+ansible -m setup all
+openstack-ansible playbooks/repo-build.yml 
+openstack-ansible playbooks/os-haproxy
+openstack-ansible playbooks/os-designate-install.yml 
+
+On designate container:
+apt-get install bind9 bind9utils bind9-doc
+
+cd /etc/bind
+
+RNDC warning message explained: https://deepthought.isc.org/article/AA-00722/0/Why-does-rndc-log-warning-key-file-...-exists-but-using-default-configuration-file-rndc.conf.html
+
+
+Generate new rndc key: 
+rndc-confgen -a -k designate-sha -c rndc1.key -r /dev/urandom -A hmac-sha512
+
+Note: if creating new rndc key file, set appropriate permissions on it. 
+chmod 640 rndc1.key
+
+
+From server, attach to utility container:
+lxc-attach -n aio1_utility_container-4c44bf84
+Source openrc file:
+source /root/openrc
+
+Confirm dns services are running:
+openstack dns service list
+
+Should see something like this:
+
++--------------------------------------+-----------------------------------+--------------+--------+-------+--------------+
+| id                                   | hostname                          | service_name | status | stats | capabilities |
++--------------------------------------+-----------------------------------+--------------+--------+-------+--------------+
+| 3d71ec2c-6f9b-4d68-b17e-7c04edf75e38 | aio1-designate-container-f869050a | worker       | UP     | -     | -            |
+| 4b12fee5-a950-427d-86a2-2abf8a21a660 | aio1-designate-container-f869050a | central      | UP     | -     | -            |
+| e24d8819-6c04-415c-93fb-6bc1bdf6893d | aio1-designate-container-f869050a | producer     | UP     | -     | -            |
+| 558c107f-1dae-49ba-9701-135618132bdf | aio1-designate-container-f869050a | mdns         | UP     | -     | -            |
+| 8bd480b0-7067-4f19-ba01-39842fa8ac8c | aio1-designate-container-f869050a | api          | UP     | -     | -            |
++--------------------------------------+-----------------------------------+--------------+--------+-------+--------------+
+
+rndc -s 172.29.249.115 -p 953 -k /etc/designate/rndc.key status
+
+
+
+designate domain-create --name foobar.com. --email root@foobar.com
+# DOMAINID=$(designate domain-list | grep foobar.com | awk '{print $2}')
+designate record-create --name server1.foobar3.com. --type A --data 1.2.3.4 $DOMAINID
+
+
+Troubleshooting: 
+https://docs.openstack.org/designate/pike/admin/troubleshooting.html
