@@ -352,3 +352,6 @@ designate record-create --name server1.foobar3.com. --type A --data 1.2.3.4 $DOM
 
 Troubleshooting: 
 https://docs.openstack.org/designate/pike/admin/troubleshooting.html
+
+Neutron integration follow these steps:
+https://docs.openstack.org/newton/networking-guide/config-dns-int.html
