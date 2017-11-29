@@ -150,6 +150,152 @@ index 0376337..e946233 100644
 
 
 
+#update /etc/ansible/roles
+
+cd /etc/ansible/roles/os_designate
+/etc/ansible/roles/os_designate# git diff tasks/designate_install.yml
+diff --git a/tasks/designate_install.yml b/tasks/designate_install.yml
+index 5937915..e38ae3d 100644
+--- a/tasks/designate_install.yml
++++ b/tasks/designate_install.yml
+@@ -35,7 +35,7 @@
+ 
+ - name: Install requires pip packages
+   pip:
+-    name: "{{ designate_requires_pip_packages }}"
++    name: "{{ designate_requires_pip_packages | join(' ') }}"
+     state: "{{ designate_pip_package_state }}"
+     extra_args: >-
+       {{ (pip_install_upper_constraints is defined) | ternary('--constraint ' + pip_install_upper_constraints | default(''),'') }}
+@@ -85,7 +85,7 @@
+ 
+ - name: Install pip packages
+   pip:
+-    name: "{{ designate_pip_packages }}"
++    name: "{{ designate_pip_packages | join(' ') }}"
+     state: "{{ designate_pip_package_state }}"
+     virtualenv: "{{ designate_bin | dirname }}"
+
+
+/etc/ansible/roles/os_designate# git diff handlers/main.yml
+diff --git a/handlers/main.yml b/handlers/main.yml
+index f91ada8..d3e74cc 100644
+--- a/handlers/main.yml
++++ b/handlers/main.yml
+@@ -26,7 +26,7 @@
+     name: "{{ item.value.service_name }}"
+     enabled: yes
+     state: "stopped"
+-    daemon_reload: "{{ (ansible_service_mgr == 'systemd') | ternary('yes', omit) }}"
++    #daemon_reload: "{{ (ansible_service_mgr == 'systemd') | ternary('yes', omit) }}"
+   with_dict: "{{ designate_services }}"
+   when: inventory_hostname in groups[item.value.group]
+   register: _stop
+@@ -56,7 +56,7 @@
+     name: "{{ item.value.service_name }}"
+     enabled: yes
+     state: "started"
+-    daemon_reload: "{{ (ansible_service_mgr == 'systemd') | ternary('yes', omit) }}"
++    #daemon_reload: "{{ (ansible_service_mgr == 'systemd') | ternary('yes', omit) }}"
+   with_dict: "{{ designate_services }}"
+   when: inventory_hostname in groups[item.value.group]
+   register: _start
+
+
+
+
+diff --git a/defaults/main.yml b/defaults/main.yml
+index 19333c8..c741ff8 100644
+--- a/defaults/main.yml
++++ b/defaults/main.yml
+@@ -23,7 +23,7 @@ designate_pip_package_state: "latest"
+ 
+ ## The git source/branch
+ designate_git_repo: https://git.openstack.org/openstack/designate
+-designate_git_install_branch: stable/ocata
++designate_git_install_branch: stable/newton
+ 
+ # Developer mode is used for role functional testing and allows the role
+ # to build an environment directly from a git source without the presence
+@@ -91,27 +91,28 @@ designate_role_name: admin
+ #
+ # This is some example pools.yaml information that will work with a
+ # simple bind9 installation in the same container as Designate.
+-# designate_pools_yaml:
+-#   - name: "default"
+-#     description: Default BIND9 Pool
+-#     attributes: {}
+-#     ns_records:
+-#       - hostname: ns1.example.org.
+-#         priority: 1
+-#     nameservers:
+-#       - host: 127.0.0.1
+-#         port: 53
+-#     targets:
+-#       - type: bind9
+-#         description: BIND9 Server
+-#         masters:
+-#           - host: 127.0.0.1
+-#             port: 5354
+-#         options:
+-#           host: 127.0.0.1
+-#           port: 53
+-#           rndc_host: 127.0.0.1
+-#           rndc_port: 953
++designate_pools_yaml:
++   - name: "default"
++     description: Default BIND9 Pool
++     attributes: {}
++     ns_records:
++       - hostname: bind1.
++         priority: 1
++     nameservers:
++       - host: 172.29.249.120
++         port: 53
++     targets:
++       - type: bind9
++         description: BIND9 Server
++         masters:
++           - host: 172.29.249.120
++             port: 5354
++         options:
++           host: 172.29.249.120
++           port: 53
++           rndc_host: 172.29.249.120
++           rndc_port: 953
++           rndc_key_file: /etc/designate/rndc.key
+ 
+ ## Service Type and Data
+ designate_service_region: RegionOne
+
+
+Desginate pools:
+
+designate_pools_yaml:
+   - name: "default"
+     description: Default BIND9 Pool
+     attributes: {}
+     ns_records:
+       - hostname: bind1.
+         priority: 1
+     nameservers:
+       - host: 172.29.249.120
+         port: 53
+     targets:
+       - type: bind9
+         description: BIND9 Server
+         masters:
+           - host: 172.29.249.120
+             port: 5354
+         options:
+           host: 172.29.249.120
+           port: 53
+           rndc_host: 172.29.249.120
+           rndc_port: 953
+           rndc_key_file: /etc/designate/rndc.key
+
+
+
 cd /opt/openstack-ansible
 openstack-ansible playbooks/lxc-containers-create.yml --limit designate_all
 ansible -m setup all
