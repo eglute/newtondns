@@ -52,7 +52,7 @@ root@egle-newton-dns-5:/opt/openstack-ansible#
 
 git clone https://github.com/openstack/openstack-ansible-os_designate /etc/ansible/roles/os_designate
 cd /etc/ansible/roles/os_designate/
-git checkout stable/newton
+git checkout stable/ocata
 
 
 playbooks/inventory/env.d/designate.yml
