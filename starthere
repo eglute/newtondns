@@ -265,6 +265,9 @@ index 19333c8..c741ff8 100644
 +           rndc_port: 953
 +           rndc_key_file: /etc/designate/rndc.key
  
+ #pools docs: https://docs.openstack.org/designate/latest/admin/multiple-pools.html
+ 
+ 
  ## Service Type and Data
  designate_service_region: RegionOne
 
