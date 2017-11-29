@@ -321,6 +321,7 @@ Note: if creating new rndc key file, set appropriate permissions on it.
 chmod 640 rndc1.key
 
 
+
 From server, attach to utility container:
 lxc-attach -n aio1_utility_container-4c44bf84
 Source openrc file:
@@ -349,6 +350,15 @@ designate domain-create --name foobar.com. --email root@foobar.com
 # DOMAINID=$(designate domain-list | grep foobar.com | awk '{print $2}')
 designate record-create --name server1.foobar3.com. --type A --data 1.2.3.4 $DOMAINID
 
+update /openstack/venvs/neutron-14.2.11/lib/python2.7/site-packages/neutron/services/externaldns/drivers/designate/driver.py with newer newton version: https://github.com/openstack/neutron/blob/newton-eol/neutron/services/externaldns/drivers/designate/driver.py
+
+
+systemctl restart designate-sink; 
+systemctl restart designate-worker; 
+systemctl restart designate-central; 
+systemctl restart designate-producer; 
+systemctl restart designate-api; 
+systemctl restart designate-mdns;
 
 Troubleshooting: 
 https://docs.openstack.org/designate/pike/admin/troubleshooting.html
