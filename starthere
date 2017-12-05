@@ -1,5 +1,3 @@
-ansible-role-requirements.yml — version of designate. update.
-
 root@egle-newton-dns-5:/opt/openstack-ansible# git cherry-pick 835bec6c3656151deaa8632c2772f638095eb7ae
 error: could not apply 835bec6... Adding Designate to integrated repo.
 hint: after resolving the conflicts, mark the corrected paths
