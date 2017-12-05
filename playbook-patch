@@ -1,0 +1,93 @@
+diff --git a/playbooks/defaults/repo_packages/openstack_services.yml b/playbooks/defaults/repo_packages/openstack_services.yml
+index de797be..49ac125 100644
+--- a/playbooks/defaults/repo_packages/openstack_services.yml
++++ b/playbooks/defaults/repo_packages/openstack_services.yml
+@@ -58,7 +58,7 @@ cinder_git_project_group: cinder_all
+ 
+ ## Designate service
+ designate_git_repo: https://git.openstack.org/openstack/designate
+-designate_git_install_branch: 7dd477815ebea4f7cdf230dec7f2a3e19605a3bb # HEAD of "master" as of 12.10.2016
++designate_git_install_branch: 36b3d016f61070ba4f77e80583842b359fbf1b6e
+ designate_git_dest: "/opt/designate_{{ designate_git_install_branch | replace('/', '_') }}"
+ designate_git_project_group: designate_all
+ 
+diff --git a/playbooks/inventory/env.d/designate.yml b/playbooks/inventory/env.d/designate.yml
+index 4eaf94b..575a6da 100644
+--- a/playbooks/inventory/env.d/designate.yml
++++ b/playbooks/inventory/env.d/designate.yml
+@@ -23,10 +23,10 @@ component_skel:
+   designate_mdns:
+     belongs_to:
+       - designate_all
+-  designate_pool_manager:
++  designate_worker:
+     belongs_to:
+       - designate_all
+-  designate_zone_manager:
++  designate_producer:
+     belongs_to:
+       - designate_all
+   designate_sink:
+@@ -41,9 +41,9 @@ container_skel:
+       - designate_api
+       - designate_central
+       - designate_mdns
+-      - designate_pool_manager
+-      - designate_zone_manager
+       - designate_sink
++      - designate_worker
++      - designate_producer
+     properties:
+       service_name: designate
+ 
+diff --git a/playbooks/inventory/group_vars/designate_all.yml b/playbooks/inventory/group_vars/designate_all.yml
+index 80b331e..8db7a4a 100644
+--- a/playbooks/inventory/group_vars/designate_all.yml
++++ b/playbooks/inventory/group_vars/designate_all.yml
+@@ -24,9 +24,6 @@ designate_service_region: "{{ service_region }}"
+ designate_galera_address: "{{ galera_address }}"
+ designate_galera_user: designate
+ designate_galera_database_name: designate
+-designate_pool_manager_galera_user: designate_pool_manager
+-designate_pool_manager_galera_address: "{{ galera_address }}"
+-designate_pool_manager_galera_database_name: designate_pool_manager
+ 
+ # RPC
+ designate_rabbitmq_userid: designate
+diff --git a/playbooks/os-designate-install.yml b/playbooks/os-designate-install.yml
+index bbe0131..b29dea2 100644
+--- a/playbooks/os-designate-install.yml
++++ b/playbooks/os-designate-install.yml
+@@ -58,19 +58,11 @@
+         login_host: "{{ designate_galera_address }}"
+         db_name: "{{ designate_galera_database_name }}"
+       when: inventory_hostname == groups['designate_all'][0]
+-    - include: common-tasks/mysql-db-user.yml
+-      static: no
+-      vars:
+-        user_name: "{{ designate_pool_manager_galera_user }}"
+-        password: "{{ designate_pool_manager_galera_password }}"
+-        login_host: "{{ designate_pool_manager_galera_address }}"
+-        db_name: "{{ designate_pool_manager_galera_database_name }}"
+-      when: inventory_hostname == groups['designate_all'][0]
+     - include: common-tasks/package-cache-proxy.yml
+   roles:
+     - role: "os_designate"
+       designate_venv_tag: "{{ openstack_release }}"
+-      designate_venv_download_url: "{{ openstack_repo_url }}/venvs/{{ openstack_release }}/{{ ansible_distribution | lower }}/designate-{{ openstack_release }}-{{ ansible_architecture | lower }}.tgz"
++      designate_venv_download_url: "{{ venv_base_download_url }}/designate-{{ openstack_release }}-{{ ansible_architecture | lower }}.tgz"
+     - role: "openstack_openrc"
+       tags:
+         - openrc
+diff --git a/playbooks/vars/configs/haproxy_config.yml b/playbooks/vars/configs/haproxy_config.yml
+index 0376337..e946233 100644
+--- a/playbooks/vars/configs/haproxy_config.yml
++++ b/playbooks/vars/configs/haproxy_config.yml
+@@ -252,6 +252,7 @@ haproxy_default_services:
+   - service:
+       haproxy_service_name: designate_api
+       haproxy_backend_nodes: "{{ groups['designate_api'] | default([]) }}"
++      haproxy_ssl: "{{ haproxy_ssl }}"
+       haproxy_port: 9001
+       haproxy_balance_type: http
+       haproxy_backend_options:
