@@ -18,6 +18,9 @@ from oslo_config import cfg
 from neutron._i18n import _
 
 designate_opts = [
+    cfg.StrOpt('project_domain_name', help=_('project domain name for connecting to designate')),
+    cfg.StrOpt('user_domain_name', help=_('user domain name for connecting to designate')),
+    cfg.StrOpt('project_name', help=_('project name for connecting to designate')),
     cfg.StrOpt('url',
                help=_('URL for connecting to designate')),
     cfg.StrOpt('admin_username',
