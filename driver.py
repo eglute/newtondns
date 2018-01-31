@@ -55,7 +55,10 @@ def get_clients(context):
         username=CONF.designate.admin_username,
         password=CONF.designate.admin_password,
         tenant_name=CONF.designate.admin_tenant_name,
-        tenant_id=CONF.designate.admin_tenant_id)
+        tenant_id=CONF.designate.admin_tenant_id,
+        project_domain_name=CONF.designate.project_domain_name,
+        user_domain_name=CONF.designate.user_domain_name,
+        project_name=CONF.designate.project_name)
     admin_client = d_client.Client(session=_SESSION, auth=admin_auth)
     return client, admin_client
 
