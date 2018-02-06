@@ -60,7 +60,7 @@ def get_clients(context):
         user_domain_name=CONF.designate.user_domain_name,
         project_name=CONF.designate.project_name)
     admin_client = d_client.Client(session=_SESSION, auth=admin_auth)
-    return client, admin_client
+    return admin_client, admin_client
 
 
 class Designate(driver.ExternalDNSService):
